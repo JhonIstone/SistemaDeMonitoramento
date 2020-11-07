@@ -38,21 +38,21 @@ public class Sistema{
 		List<Unidade> listunidade = new ArrayList<Unidade>();
 		unidadesdao.getUnidades(listunidade);
 		UnidadesDTO unidade = null;
+		String retorno = null;
 		if (!listunidade.isEmpty()) {
 			Collections.sort(listunidade, new UnidadeComparator(abscissa, ordenada));
 	
 			for (Unidade uni : listunidade) {
 				if (uni.isConfigurada(video, termometro, co2, metano)) {
 					unidade = new UnidadesDTO(uni.getId(), abscissa, ordenada);
-					this.unidadesdao.atualizarUnidade(unidade.getId(), abscissa, ordenada);
+					retorno = this.unidadesdao.atualizarUnidade(unidade.getId(), abscissa, ordenada);
 					break;
 				}
 			}
 		}
 		
 		try {
-			return "Uniadade Id: " + unidade.toString() + "movida para: " 
-		+ unidade.getAbscissa() + " X " + unidade.getOrdenada();
+			return retorno;
 		} catch (NullPointerException e) {
 			return "Nenhuma maquina disponivel!!";
 		}
