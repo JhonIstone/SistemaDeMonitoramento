@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import LogicaUnidades.Unidade;
 import LogicaUnidades.UnidadeEuclidiana;
@@ -18,6 +19,7 @@ public class SQLUnidade implements UnidadesDAO{
 	+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"; 
 	private static String GET_SQL = "SELECT * FROM UNIDADE";
 	private static String UPDATE_SQL = "UPDATE UNIDADE SET ABCISSA = ?, ORDENADA = ? WHERE ID = ?";
+	private static String DELET_SQL = "DELETE FROM UNIDADE WHERE ID = ?";
 		
 	public SQLUnidade () throws SQLException {
 		DriverManager.registerDriver(new org.h2.Driver());
@@ -28,11 +30,7 @@ public class SQLUnidade implements UnidadesDAO{
 		return conn;
 	}
 	
-	public void salvar(Unidade unidade) throws SQLException{
-		this.salvarUnidade(unidade);
-	}
-	
-	private void salvarUnidade(Unidade unidade) throws SQLException {
+	public String salvarUnidade(Unidade unidade) throws SQLException {
 		PreparedStatement ps = this.getConnection().prepareStatement(SAVE_SQL);
 		ps.setInt(1, unidade.getId());
 		ps.setFloat(2, unidade.getAbscissa());
@@ -46,12 +44,18 @@ public class SQLUnidade implements UnidadesDAO{
 			ps.setBoolean(8, true);
 		else
 			ps.setBoolean(8, false);
-			
-		ps.executeUpdate();
-		ps.close();
+		
+		try {
+			ps.executeUpdate();
+			ps.close();
+			return "Maquina Id: " + unidade.getId() + " adicionar com sucesso";
+		} catch (SQLIntegrityConstraintViolationException e) {
+			return "Este Id  ja esta em uso por outra maquina";
+		}
+		
 	}
 	
-	public void get(List<Unidade> unidade) throws SQLException {
+	public void getUnidades(List<Unidade> unidade) throws SQLException {
 		Statement stmt = this.getConnection().createStatement();//GET_SQL
 		if (stmt.execute(GET_SQL));
 			ResultSet rs = stmt.getResultSet();
@@ -76,7 +80,7 @@ public class SQLUnidade implements UnidadesDAO{
 		stmt.close();
 	}		
 	
-	public void atualizar(int id, float abcissa, float ordenada) throws SQLException {
+	public String atualizarUnidade(int id, float abcissa, float ordenada) throws SQLException {
 		PreparedStatement upabc = this.getConnection().prepareStatement(UPDATE_SQL);
 		upabc.setFloat(1, abcissa);
 		upabc.setFloat(2, ordenada);
@@ -84,10 +88,24 @@ public class SQLUnidade implements UnidadesDAO{
 		try {
 			upabc.executeUpdate();
 			upabc.close();
+			return "Maquina Id: " + id + "movida para: " 
+					+ abcissa + " X " + ordenada;
 		} catch (BatchUpdateException e) {
-			System.out.println("OCORREU UM ERRO AO ATUALIZAR A LOCALIZAÇÃO DA MAQUINA");
+			return "OCORREU UM ERRO AO ATUALIZAR A LOCALIZAÇÃO DA MAQUINA";
 		}
 		
+	}
+	
+	public String excluirUnidade (int id) throws SQLException {
+		PreparedStatement delet = this.getConnection().prepareStatement(DELET_SQL);
+		delet.setInt(1, id);
+		try {
+			delet.executeUpdate();
+			delet.close();
+			return "Maquina " + id + " removida";
+		} catch (SQLException e) {
+			return "Maquina " + id + " nao foi encontrada";
+		} 
 	}
 
 }

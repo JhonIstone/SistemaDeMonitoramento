@@ -14,32 +14,29 @@ import Persistencia.SQLUnidade;
 import Persistencia.UnidadesDAO;
 
 public class Sistema{
-	
-	private UnidadesDAO unidadesdao; 
+		
+	private UnidadesDAO unidadesdao;
 	
 	public Sistema () throws SQLException{
             this.unidadesdao = new SQLUnidade();
 	}
 	
-	public void addUnidadeManhatan (int id, float abscissa, float ordenada, boolean video, boolean termometro, boolean co2, 
+	public String addUnidadeManhatan (int id, float abscissa, float ordenada, boolean video, boolean termometro, boolean co2, 
 									boolean metano) throws Exception{
-		Unidade UniMan = new UnidadeManhatan(id, abscissa, ordenada, 
-		 video, termometro, co2, metano);
-        this.unidadesdao.salvar(UniMan);
+		Unidade UniMan = new UnidadeManhatan(id, abscissa, ordenada, video, termometro, co2, metano);
+        return this.unidadesdao.salvarUnidade(UniMan);
                 
 	}
-	
-	public void addUnidadeEuclidiana(int id, float abscissa, float ordenada, boolean video, boolean termometro, boolean co2, 
-									boolean metano) throws Exception {
-		Unidade UniEuc = new UnidadeEuclidiana(id, abscissa, ordenada, video, termometro, co2, metano);
 
-            this.unidadesdao.salvar(UniEuc);
+	public String addUnidadeEuclidiana(int id, float abscissa, float ordenada, boolean video, boolean termometro, boolean co2, boolean metano) throws Exception {
+		Unidade UniEuc = new UnidadeEuclidiana(id, abscissa, ordenada, video, termometro, co2, metano);
+        	return this.unidadesdao.salvarUnidade(UniEuc);
 	}
 	
 	public String monitorar (float abscissa,  float ordenada, boolean video, boolean termometro, 
 							boolean co2, boolean metano) throws Exception{
 		List<Unidade> listunidade = new ArrayList<Unidade>();
-		unidadesdao.get(listunidade);
+		unidadesdao.getUnidades(listunidade);
 		UnidadesDTO unidade = null;
 		if (!listunidade.isEmpty()) {
 			Collections.sort(listunidade, new UnidadeComparator(abscissa, ordenada));
@@ -47,16 +44,38 @@ public class Sistema{
 			for (Unidade uni : listunidade) {
 				if (uni.isConfigurada(video, termometro, co2, metano)) {
 					unidade = new UnidadesDTO(uni.getId(), abscissa, ordenada);
-					this.unidadesdao.atualizar(unidade.getId(), abscissa, ordenada);
+					this.unidadesdao.atualizarUnidade(unidade.getId(), abscissa, ordenada);
 					break;
 				}
 			}
 		}
 		
 		try {
-			return unidade.toString();
+			return "Uniadade Id: " + unidade.toString() + "movida para: " 
+		+ unidade.getAbscissa() + " X " + unidade.getOrdenada();
 		} catch (NullPointerException e) {
 			return "Nenhuma maquina disponivel!!";
 		}
+	}
+	
+	public String listarUnidades () throws Exception {
+
+		List<Unidade> listunidade = new ArrayList<Unidade>();
+		unidadesdao.getUnidades(listunidade);
+		String lista = new String();
+			for (Unidade unidade : listunidade) {
+				lista += "Maquina ID:" + unidade.getId() + " Posicao: " 
+				+ unidade.getAbscissa() + " X " + unidade.getOrdenada() + "\n";
+			}
+			if (lista.isEmpty())
+				return "Nenhuma maquina encontrada!!";
+			else
+				return lista;		
+	}			
+		
+	public String excluirUnidade (int id) throws SQLException {
+		String retorno = new String();
+			retorno = unidadesdao.excluirUnidade(id);
+			return retorno;
 	}
 }
